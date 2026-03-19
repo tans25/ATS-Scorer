@@ -52,3 +52,9 @@ class PreProcessor:
         text = regex.sub(r'[^a-zA-Z0-9]', ' ', text)
         return text
     
+    def full_clean(self):
+        cleaned_text = self.clean_text()
+        normalized_text = self.normalization(cleaned_text)
+        lemmatized_text = self.lemmatize(normalized_text)
+        cleaned_text = self.remove_stopwords(lemmatized_text)
+        return cleaned_text

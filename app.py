@@ -1,5 +1,9 @@
 import streamlit as st 
 import preprocessing
+import resumeparser
+from pipeline import run_pipeline
+import tempfile 
+import os 
 
 st.set_page_config(
     page_title="ATS Scorer",
@@ -318,8 +322,8 @@ html, body, [data-testid="stAppViewContainer"] {
 
 if "page" not in st.session_state:
     st.session_state.page = "input"
-if "resume_text" not in st.session_state:
-    st.session_state.resume_text = None
+if "resume_file" not in st.session_state:
+    st.session_state.resume_file = None
 if "jd_text" not in st.session_state:
     st.session_state.jd_text = ""
 
@@ -370,8 +374,21 @@ def input_page():
         elif not jd_text.strip():
             st.error("Please paste a job description to continue.")
         else:
-            st.session_state.resume_file = uploaded_file
-            st.session_state.jd_text = jd_text
+            with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(uploaded_file.name)[-1]) as tmp:
+                tmp.write(uploaded_file.read())
+                tmp_path = tmp.name 
+            try:
+                results = run_pipeline(tmp_path, jd_text)
+                if results["success"]:
+                    st.session_state.results = results["result"]
+                else:
+                    st.session_state.results = ""
+                    st.error(results["message"])
+                st.rerun()
+            except Exception as e: 
+                st.error("Failed to parse resume")
+            finally:
+                os.unlink(tmp_path)
     
     st.markdown("""
     <div class="footer-note">

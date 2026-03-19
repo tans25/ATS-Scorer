@@ -1,7 +1,7 @@
 import pdfplumber 
 import os 
 
-file_path = '/Users/tanayapravinjoshi/Downloads/TanayaJoshiResume_SWE_intern.pdf'
+
 
 class ResumeParser:
     def __init__(self, file_path):
@@ -25,12 +25,12 @@ class ResumeParser:
         result = {}
         try: 
             if not os.path.exists(self.file_path):
-                return {"result":True, "message":"File not found"}
+                return {"success":False, "message":"File not found"}
             ext = os.path.splitext(self.file_path)[-1].lower()
             if ext == ".pdf":
-                result = self.resume_text_extractor(self.file_path)
+                result = self.resume_text_extractor()
             else:
-                return {"result":True, "message":"File type not supported"}
+                return {"success":False, "message":"File type not supported"}
         except Exception as e:
-            result = {"result":False, "message":"Something went wrong"}
+            result = {"success":False, "message":"Something went wrong"}
         return result 
