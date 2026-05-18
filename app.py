@@ -381,10 +381,10 @@ def input_page():
                 results = run_pipeline(tmp_path, jd_text)
                 if results["success"]:
                     st.session_state.results = results["result"]
+                    st.session_state.page = "results"
+                    st.rerun()
                 else:
-                    st.session_state.results = ""
                     st.error(results["message"])
-                st.rerun()
             except Exception as e: 
                 st.error("Failed to parse resume")
             finally:
@@ -396,5 +396,112 @@ def input_page():
     </div>
     """, unsafe_allow_html=True)
 
+def results_page():
+    results = st.session_state.get("results", {})
+    if not results:
+        st.session_state.page = "input"
+        st.rerun()
+        return
+
+    final_score = results["final_score"]
+    semantic_score = results["semantic_score"]
+    keyword_score = results["keyword_score"]
+    matched = results["matched_keywords"]
+    unmatched = results["unmatched_keywords"]
+
+    st.markdown("""
+    <div class="main-wrap">
+        <div class="hero">
+            <div class="hero-eyebrow">Analysis Complete</div>
+            <h1 class="hero-title">Your <span>Score</span></h1>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    score_color = "#64c878" if final_score >= 70 else "#c8a84b" if final_score >= 45 else "#c86450"
+    st.markdown(f"""
+    <div style="text-align:center; margin-bottom:48px;">
+        <div style="font-family:'Syne',sans-serif; font-size:96px; font-weight:800; color:{score_color}; line-height:1;">
+            {final_score}
+        </div>
+        <div style="font-size:11px; letter-spacing:0.2em; color:#6b6560; margin-top:8px;">ATS MATCH SCORE</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown(f"""
+        <div style="text-align:center; padding:24px; border:1px solid #2a2520; background:#0f0d0b;">
+            <div style="font-family:'Syne',sans-serif; font-size:36px; font-weight:700; color:#e8e4dc;">{semantic_score}</div>
+            <div style="font-size:10px; letter-spacing:0.2em; color:#6b6560; margin-top:4px;">SEMANTIC SCORE</div>
+            <div style="font-size:10px; color:#4a4540; margin-top:8px;">contextual relevance · 60% weight</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with col2:
+        st.markdown(f"""
+        <div style="text-align:center; padding:24px; border:1px solid #2a2520; background:#0f0d0b;">
+            <div style="font-family:'Syne',sans-serif; font-size:36px; font-weight:700; color:#e8e4dc;">{keyword_score}</div>
+            <div style="font-size:10px; letter-spacing:0.2em; color:#6b6560; margin-top:4px;">KEYWORD SCORE</div>
+            <div style="font-size:10px; color:#4a4540; margin-top:8px;">keyword coverage · 40% weight</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("<div style='height:48px'></div>", unsafe_allow_html=True)
+
+    # Gap analysis - group unmatched by priority
+    critical = [kw for kw in unmatched if kw["priority"] == "critical"]
+    moderate = [kw for kw in unmatched if kw["priority"] == "moderate"]
+    nice_to_have = [kw for kw in unmatched if kw["priority"] == "nice_to_have"]
+
+    st.markdown("""
+    <div style="font-family:'DM Mono',monospace; font-size:10px; font-weight:500; letter-spacing:0.25em; color:#c8a84b; margin-bottom:20px;">
+        GAP ANALYSIS — MISSING KEYWORDS
+    </div>
+    """, unsafe_allow_html=True)
+
+    if critical:
+        st.markdown(f"""
+        <div style="margin-bottom:20px; padding:16px 20px; border-left:3px solid #c86450; background:rgba(200,100,80,0.05);">
+            <div style="font-size:10px; letter-spacing:0.15em; color:#c86450; margin-bottom:10px;">CRITICAL — HIGH FREQUENCY IN JD</div>
+            <div style="font-size:12px; color:#e8e4dc; line-height:2;">{' &nbsp;·&nbsp; '.join(kw['skill'] for kw in critical)}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    if moderate:
+        st.markdown(f"""
+        <div style="margin-bottom:20px; padding:16px 20px; border-left:3px solid #c8a84b; background:rgba(200,168,75,0.05);">
+            <div style="font-size:10px; letter-spacing:0.15em; color:#c8a84b; margin-bottom:10px;">MODERATE — MENTIONED IN JD</div>
+            <div style="font-size:12px; color:#e8e4dc; line-height:2;">{' &nbsp;·&nbsp; '.join(kw['skill'] for kw in moderate)}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    if nice_to_have:
+        st.markdown(f"""
+        <div style="margin-bottom:20px; padding:16px 20px; border-left:3px solid #4a4540; background:rgba(74,69,64,0.05);">
+            <div style="font-size:10px; letter-spacing:0.15em; color:#4a4540; margin-bottom:10px;">NICE TO HAVE — LOW PRIORITY</div>
+            <div style="font-size:12px; color:#6b6560; line-height:2;">{' &nbsp;·&nbsp; '.join(kw['skill'] for kw in nice_to_have)}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("<div style='height:32px'></div>", unsafe_allow_html=True)
+
+    st.markdown(f"""
+    <div style="font-family:'DM Mono',monospace; font-size:10px; font-weight:500; letter-spacing:0.25em; color:#c8a84b; margin-bottom:20px;">
+        MATCHED KEYWORDS — {results['matched_count']} FOUND
+    </div>
+    <div style="padding:16px 20px; border-left:3px solid #64c878; background:rgba(100,200,120,0.05);">
+        <div style="font-size:12px; color:#e8e4dc; line-height:2;">{' &nbsp;·&nbsp; '.join(kw['skill'] for kw in matched)}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("<div style='height:48px'></div>", unsafe_allow_html=True)
+    if st.button("← Analyze Another Resume"):
+        st.session_state.page = "input"
+        st.session_state.results = None
+        st.rerun()
+
+
 if st.session_state.page == "input":
     input_page()
+elif st.session_state.get("results"):
+    results_page()

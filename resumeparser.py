@@ -1,5 +1,6 @@
 import pdfplumber 
 import os 
+from llama_section_detector import LlamaResumeSectionDetector
 
 
 
@@ -16,7 +17,8 @@ class ResumeParser:
                     page_text = page.extract_text()
                     if page_text:
                         text += page_text + "\n"
-            result = {"success":True, "text": text}
+            sections = LlamaResumeSectionDetector().detect_sections(self.file_path)
+            result = {"success":True, "text": text, "resume_sections": sections}
         except Exception as e:
             result = {"success":False, "message":"Something went wrong"}
         return result 
