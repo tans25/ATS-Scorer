@@ -6,6 +6,8 @@ A full-stack ATS resume scoring tool that analyzes how well a candidate's resume
 Most ATS systems reject qualified candidates because their resume doesn't contain the exact keywords the system is scanning for. A candidate who writes "applied statistical techniques" gets rejected when the JD asks for "statistics". Someone with anomaly detection experience gets flagged as missing "regression" despite the implied knowledge. This tool solves that by going beyond literal keyword matching to understand resume context.
 
 ## Architecture
+
+```
 Resume (PDF/DOCX)
       ↓
 LlamaParse — structure-preserving document parsing
@@ -20,20 +22,21 @@ parse_markdown_sections() — splits resume into labeled sections
 │  Qwen2.5-72B (HuggingFace) — keyword extraction    │
 │       ↓                                             │
 │  ┌────────────────┐    ┌───────────────────────┐   │
-│  │ Semantic Score │    │   Keyword Match Score  │   │
-│  │                │    │                        │   │
-│  │ sentence-      │    │ 1. Exact match         │   │
-│  │ transformers   │    │ 2. ESCO ontology match │   │
-│  │ chunk-based    │    │ 3. Fuzzy match         │   │
-│  │ cosine sim     │    │ 4. Semantic match      │   │
-│  └──────┬─────────┘    └───────────┬────────────┘   │
-│         └──────────────────────────┘                │
-│                      ↓                              │
-│              Weighted Combiner                      │
-│           (60% semantic / 40% keyword)              │
+│  │ Semantic Score │    │  Keyword Match Score  │   │
+│  │                │    │                       │   │
+│  │ sentence-      │    │ 1. Exact match        │   │
+│  │ transformers   │    │ 2. ESCO ontology      │   │
+│  │ chunk-based    │    │ 3. Fuzzy match        │   │
+│  │ cosine sim     │    │ 4. Semantic match     │   │
+│  └──────┬─────────┘    └──────────┬────────────┘   │
+│         └─────────────────────────┘                │
+│                      ↓                             │
+│              Weighted Combiner                     │
+│           (60% semantic / 40% keyword)             │
 └─────────────────────────────────────────────────────┘
       ↓
 Streamlit UI — score + gap analysis
+```
 
 ## Features
 
