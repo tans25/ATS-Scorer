@@ -20,7 +20,7 @@ def run_pipeline(resume_path, jd_text):
         resume_sections = resume_obj["resume_sections"]
 
         preprocessor_resume = PreProcessor(resume_text)
-        clean_resume_full = preprocessor_resume.full_clean()
+        clean_resume_full = preprocessor_resume.clean_text()
 
         preprocessor_jd = PreProcessor(jd_text)
         clean_jd_light = preprocessor_jd.clean_text()
@@ -54,6 +54,7 @@ def run_pipeline(resume_path, jd_text):
         }
         return {"success": True, "result": result}
     except Exception as e:
+        print(e)
         return {"success": False, "message": "Something went wrong"}
 
 
